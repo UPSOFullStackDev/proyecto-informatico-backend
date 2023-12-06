@@ -151,3 +151,31 @@ def modify_product(user_id, product_id):
         "stock" : stock,
         "user_id" : user_id
         })
+
+@app.route("/user/<int:user_id>/products/stock", methods=["GET"])
+@token_required
+@user_resource
+def low_stock(user_id):
+    # Connect to the DataBase
+    cur = mysql.connection.cursor()
+
+    # SQL Query
+    cur.execute("SELECT idProduct, Stock, Name FROM Product WHERE Stock < 10 AND State = 1 AND User_idUser = {0} ORDER BY stock ASC".format(user_id))
+    data = cur.fetchall()
+
+    # If not products with low stock
+    if not data:
+        return jsonify({"message" : "You have 0 products with low stock!"}), 404
+
+    # Convert Rows
+    productsList = []
+    for row in data:
+        product = {
+            "id" : row[0],
+            "stock" : row[1],
+            "name" : row[2]
+        }
+        productsList.append(product)
+
+    # Return List
+    return  jsonify(productsList)
